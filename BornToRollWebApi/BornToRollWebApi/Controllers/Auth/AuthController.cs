@@ -1,8 +1,10 @@
 ﻿using BornToRollWebApi.Data;
 using BornToRollWebApi.Models;
 using BornToRollWebApi.Services.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BornToRollWebApi.Controllers.Auth
 {
@@ -70,6 +72,17 @@ namespace BornToRollWebApi.Controllers.Auth
                 user.Id,
                 user.Email
             });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            return Ok(new { Id = id, Email = email, Role = role });
         }
     }
 }
