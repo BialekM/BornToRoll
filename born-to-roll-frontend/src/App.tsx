@@ -1,17 +1,28 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginForm from './components/Login/LoginForm';
+import RegisterForm from './components/Register/RegisterForm';
+import Dashboard from './components/Dashboard/Dashboard';
 import { useAuth } from './contexts/AuthContext';
 
 function App() {
   const { user, loading } = useAuth();
 
   if (loading) return <div>Ładowanie...</div>;
-  if (!user) return <LoginForm />;
 
   return (
-    <div className="p-8">
-      <h1>Cześć {user.name}! Zalogowany jako {user.email}</h1>
-      <button onClick={() => localStorage.removeItem('token')}>Wyloguj</button>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={!user ? <LoginForm /> : <Navigate to="/dashboard" />} />
+        <Route path="/register" element={!user ? <RegisterForm /> : <Navigate to="/dashboard" />} />
+        
+        {/* Protected routes */}
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+        
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

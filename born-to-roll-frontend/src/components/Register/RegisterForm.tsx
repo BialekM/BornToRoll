@@ -1,44 +1,57 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import './LoginForm.css';
+import './RegisterForm.css';
 
-export default function LoginForm() {
+export default function RegisterForm() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await login(email, password);
-      alert('✅ Logged in successfully');
+      await register(email, password, name);
+      alert('✅ Account created successfully');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login error');
+      setError(err.response?.data?.message || 'Registration error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div className="register-container">
+      <div className="register-card">
         {/* Motto */}
-        <p className="login-motto">
+        <p className="register-motto">
           black belt is a white belt that never quit
         </p>
         
         {/* Logo */}
-        <div className="login-header">
+        <div className="register-header">
           <img 
             src="/BornToRoll.png" 
             alt="Born To Roll Logo" 
-            className="login-logo"
+            className="register-logo"
           />
         </div>
 
@@ -49,6 +62,20 @@ export default function LoginForm() {
         )}
 
         <form onSubmit={handleSubmit} className="form-container">
+          <div>
+            <label className="form-label">
+              Name
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
           <div>
             <label className="form-label">
               Email
@@ -77,19 +104,33 @@ export default function LoginForm() {
             />
           </div>
 
+          <div>
+            <label className="form-label">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             disabled={loading}
             className="submit-button"
           >
-            {loading ? 'Logging in…' : 'Sign in'}
+            {loading ? 'Creating account…' : 'Sign up'}
           </button>
         </form>
 
         <div className="footer-actions">
-          <span>Don't have an account?</span>
-          <Link to="/register" className="switch-form-link">
-            Sign up
+          <span>Already have an account?</span>
+          <Link to="/login" className="switch-form-link">
+            Sign in
           </Link>
         </div>
       </div>
