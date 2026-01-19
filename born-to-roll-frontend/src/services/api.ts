@@ -16,6 +16,10 @@ export const authAPI = {
   register: (email: string, password: string, name: string) => 
     API.post('/auth/register', { email, password, name }),
   me: () => API.get('/auth/me'),
+  forgotPassword: (email: string) =>
+    API.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    API.post('/auth/reset-password', { token, newPassword }),
 };
 
 export default API;

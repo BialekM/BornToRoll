@@ -1,5 +1,8 @@
 using BornToRollWebApi.Data;
 using BornToRollWebApi.Services.Auth;
+using BornToRollWebApi.Services.Email;
+using BornToRollWebApi.Services.RateLimit;
+using BornToRollWebApi.Services.Cleanup;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -74,10 +77,33 @@ builder.Services.AddSwaggerGen(c =>
 // Register application services
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddSingleton<RateLimitService>();
+builder.Services.AddHostedService<TokenCleanupService>();
+
+// Use console email service in development, SMTP in production
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IEmailService, ConsoleEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+}
 
 // Database context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
+              .WithMethods("GET", "POST", "PUT", "DELETE")
+              .WithHeaders("Content-Type", "Authorization");
+    });
+});
 
 var app = builder.Build();
 
@@ -88,7 +114,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
 // MIDDLEWARE ORDER IS CRITICAL
 app.UseAuthentication();
@@ -96,4 +122,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();app.Run();
+app.Run();

@@ -1,58 +1,82 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import './RegisterForm.css';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { authAPI } from '../../services/api';
+import './ResetPassword.css';
 
-export default function RegisterForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function ResetPassword() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const token = searchParams.get('token');
+
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+
+  // Show token status on mount
+  React.useEffect(() => {
+    if (!token) {
+      setError('No reset token found in URL');
+    } else {
+      console.log('Token found:', token.substring(0, 20) + '...');
+    }
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
 
-    if (password !== confirmPassword) {
+    if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (password.length < 8) {
+    if (newPassword.length < 8) {
       setError('Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character');
+      return;
+    }
+
+    if (!token) {
+      setError('Invalid or missing reset token');
       return;
     }
 
     setLoading(true);
 
     try {
-      await register(email, password, name);
+      const response = await authAPI.resetPassword(token, newPassword);
+      setMessage(response.data.message);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (err: any) {
-      setError(err.response?.data || 'Registration failed. Please try again.');
+      setError(err.response?.data || 'Failed to reset password. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <div className="register-card">
-        {/* Motto */}
-        <p className="register-motto">
+    <div className="reset-password-container">
+      <div className="reset-password-card">
+        <p className="reset-password-motto">
           black belt is a white belt that never quit
         </p>
         
-        {/* Logo */}
-        <div className="register-header">
+        <div className="reset-password-header">
           <img 
             src="/BornToRoll.png" 
             alt="Born To Roll Logo" 
-            className="register-logo"
+            className="reset-password-logo"
           />
         </div>
+
+        <h2 className="reset-password-title">Reset Password</h2>
+        <p className="reset-password-description">
+          Enter your new password below.
+        </p>
 
         {error && (
           <div className="error-message">
@@ -60,45 +84,23 @@ export default function RegisterForm() {
           </div>
         )}
 
+        {message && (
+          <div className="success-message">
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="form-container">
           <div>
             <label className="form-label">
-              Name
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="form-label">
-              Email
-            </label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="form-label">
-              Password
+              New Password
             </label>
             <input
               type="password"
               className="form-input"
-              placeholder="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="new password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               required
             />
             <p className="password-hint">
@@ -125,14 +127,13 @@ export default function RegisterForm() {
             disabled={loading}
             className="submit-button"
           >
-            {loading ? 'Creating account…' : 'Sign up'}
+            {loading ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
 
         <div className="footer-actions">
-          <span>Already have an account?</span>
           <Link to="/login" className="switch-form-link">
-            Sign in
+            Back to Sign in
           </Link>
         </div>
       </div>

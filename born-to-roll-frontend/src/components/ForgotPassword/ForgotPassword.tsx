@@ -1,49 +1,60 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import './LoginForm.css';
+import { authAPI } from '../../services/api';
+import './ForgotPassword.css';
 
-export default function LoginForm() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      const response = await authAPI.forgotPassword(email);
+      setMessage(response.data.message);
+      setEmail('');
     } catch (err: any) {
-      setError(err.response?.data || 'Invalid email or password');
+      setError(err.response?.data || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        {/* Motto */}
-        <p className="login-motto">
+    <div className="forgot-password-container">
+      <div className="forgot-password-card">
+        <p className="forgot-password-motto">
           black belt is a white belt that never quit
         </p>
         
-        {/* Logo */}
-        <div className="login-header">
+        <div className="forgot-password-header">
           <img 
             src="/BornToRoll.png" 
             alt="Born To Roll Logo" 
-            className="login-logo"
+            className="forgot-password-logo"
           />
         </div>
+
+        <h2 className="forgot-password-title">Forgot Password?</h2>
+        <p className="forgot-password-description">
+          Enter your email address and we'll send you a link to reset your password.
+        </p>
 
         {error && (
           <div className="error-message">
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="success-message">
+            {message}
           </div>
         )}
 
@@ -62,39 +73,18 @@ export default function LoginForm() {
             />
           </div>
 
-          <div>
-            <label className="form-label">
-              Password
-            </label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
           <button
             type="submit"
             disabled={loading}
             className="submit-button"
           >
-            {loading ? 'Logging in…' : 'Sign in'}
+            {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <Link to="/forgot-password" className="switch-form-link">
-            Forgot password?
-          </Link>
-        </div>
-
         <div className="footer-actions">
-          <span>Don't have an account?</span>
-          <Link to="/register" className="switch-form-link">
-            Sign up
+          <Link to="/login" className="switch-form-link">
+            Back to Sign in
           </Link>
         </div>
       </div>
